@@ -27,6 +27,7 @@ from smoe.data.dynamic_selection import (
     AVERAGE_SLIMPAJAMA_DATA_PORTION,
     LLAMA_DATA_PORTION,
     SHEAREDLLAMA_DATA_PORTION,
+    CODE_DATA_PORTION,
 )
 from smoe.data.streaming import CachedJsonlDataset, SubDirWeightedPackedJsonlDataset
 from smoe.metrics.preprocess import logits_argmax
@@ -232,6 +233,8 @@ def main():
         prob_map = AVERAGE_SLIMPAJAMA_DATA_PORTION
     elif data_args.prob_map == "sheared_llama":
         prob_map = SHEAREDLLAMA_DATA_PORTION
+    elif data_args.prob_map == "code_llama":
+        prob_map = CODE_DATA_PORTION
 
     with training_args.main_process_first(desc="dataset map tokenization and grouping"):
         lm_datasets = SubDirWeightedPackedJsonlDataset(

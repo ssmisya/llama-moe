@@ -21,6 +21,16 @@ SHEAREDLLAMA_DATA_PORTION = {
     "en_stack": 0.01,
 }
 
+CODE_DATA_PORTION = {
+    "en_cc": 0.07,
+    "en_c4": 0,
+    "github": 0.85,
+    "en_wikipedia": 0,
+    "en_book": 0,
+    "en_arxiv": 0,
+    "en_stack": 0.08,
+}
+
 AVERAGE_SLIMPAJAMA_DATA_PORTION = {
     "en_cc": 1 / 7,
     "en_c4": 1 / 7,
