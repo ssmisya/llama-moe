@@ -24,21 +24,7 @@ source ~/anaconda3/bin/activate smoe
     # #cpu/#num_gpu_per_node
     export OMP_NUM_THREADS=32
     export LOGLEVEL=INFO
-    #  export NCCL_DEBUG=INFO
-    #  export TORCH_DISTRIBUTED_DEBUG=DETAIL
-    #  export TORCH_SHOW_CPP_STACKTRACES=1
-    #  export CUDA_LAUNCH_BLOCKING=1
-
-    ##############################################################
-    ############### LLAMA 7B 16Experts ###############
-    #  comment="llama 7B residual, gradient, 2 + 2/14 | soft residual 2.0 | soft moe 2.0 | GPU num 1, per-device bs 64, lr 1e-4"
-    #  pretrained_model=/mnt/petrelfs/share_data/quxiaoye/models/LlamaMoEResidualForCausalLM/Gradient-max-l1_norm-sample-feature_change/llama_7B-14Select2-2Residuals-688Neurons-Share
-
-    ##############################################################
-    ######## LLAMA 2 7B 16 Experts all kinds of ablations ########
-    #  comment="llama 2 7B, residual 2, gradient 2/14 | residual hard, moe soft 8.0 | GPU num 16, per-device bs 32, lr 3e-4"
-    #  comment="llama 2 7B, residual 2, gradient 2/14 | residual plain soft 8.0, moe soft 8.0 | GPU num 16, per-device bs 32, lr 3e-4"
-    #  comment="llama 2 7B, residual 2, gradient 2/14 | residual learn soft 8.0, moe soft 8.0 | GPU num 16, per-device bs 32, lr 3e-4"
+    
     model_type="llama_moe"
     comment="llama 2 7B, random 2/8, mlp gate, code llama data portion"
     pretrained_model=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
@@ -79,7 +65,7 @@ source ~/anaconda3/bin/activate smoe
 
     data_cache=resources/cache
     base_dir="/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2"
-    output_dir=$base_dir/outputs/$SLURM_JOB_NAME-$SLURM_JOB_ID
+    output_dir=/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2/outputs/MoE-3287121
     mkdir -p $output_dir
     echo "output_dir: $output_dir"
     scontrol write batch_script $SLURM_JOBID $output_dir/sbatch.sh
@@ -98,7 +84,7 @@ source ~/anaconda3/bin/activate smoe
     echo "Node IP: $head_node_ip"
     echo "Node list: $SLURM_JOB_NODELIS"
     
-    code_base="/mnt/petrelfs/dongdaize.d/smy/code/llama-moe"
+    code_base="/mnt/petrelfs/dongdaize.d/smy/code/new/llama-moe"
     cd $code_base
 
     srun torchrun \
@@ -145,7 +131,6 @@ source ~/anaconda3/bin/activate smoe
         --gradient_accumulation_steps ${gradient_accumulation_steps} \
         --block_size ${block_size} \
         --output_dir ${output_dir} \
-        --overwrite_output_dir \
         --ddp_timeout 3600 \
         --ddp_find_unused_parameters False \
         --torch_dtype bfloat16 \
@@ -159,4 +144,5 @@ source ~/anaconda3/bin/activate smoe
         --report_to none \
         --gate_type "TopKBalancedNoisyGate" \
         --calculator_type "UniversalCalculator"
+        # --overwrite_output_dir \ 
 }

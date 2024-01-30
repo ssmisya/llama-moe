@@ -55,6 +55,30 @@ class SaveModelCallback(TrainerCallback):
 
 
 class SavePeftModelCallback(TrainerCallback):
+    def upload_to_oss(self, args, state, kwargs):
+        from smoe.utils.oss import upload_to_oss
+
+        if state.best_model_checkpoint is not None:
+            peft_model_dir = os.path.join(
+                args.output_dir,
+                PREFIX_CHECKPOINT_DIR,
+                BEST_MODEL_CKPT_DIR,
+                state.best_model_checkpoint,
+                "pt_lora_model",
+            )
+        else:
+            peft_model_dir = os.path.join(
+                args.output_dir,
+                PREFIX_CHECKPOINT_DIR,
+                MIDDLE_MODEL_CKPT_DIR,
+                f"{state.global_step}",
+                "pt_lora_model",
+            )
+
+        for file in glob.glob(os.path.join(peft_model_dir, "*")):
+            upload_to_oss(file, args.output_dir)
+        
+        
     def save_model(self, args, state, kwargs, peft_model_dir: str = None):
         if peft_model_dir is None:
             if state.best_model_checkpoint is not None:
