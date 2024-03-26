@@ -1627,6 +1627,7 @@ class LlamaMoEForCausalLM(LlamaMoEPreTrainedModel):
 
         # Initialize weights and apply final processing
         self.post_init()
+        # self.reset_embeddings()
 
     def get_input_embeddings(self):
         return self.model.embed_tokens
@@ -1645,6 +1646,20 @@ class LlamaMoEForCausalLM(LlamaMoEPreTrainedModel):
 
     def get_decoder(self):
         return self.model
+
+    # def reset_embeddings(self):
+    #     input_embed = self.model.embed_tokens
+    #     if self.vocab_size-input_embed.weight.size(0) > 0:
+    #         input_pad = nn.Parameter(torch.zeros(self.vocab_size-input_embed.weight.size(0), input_embed.weight.size(1)).to(input_embed.weight.dtype))
+    #         nn.init.kaiming_uniform_(input_pad, a=math.sqrt(5))
+    #         input_embed.weight = nn.Parameter(torch.cat([input_embed.weight, input_pad.to(input_embed.weight.device)]))
+    #         self.set_input_embeddings(input_embed)
+    #     output_embed = self.lm_head
+    #     if self.vocab_size-output_embed.weight.size(0) > 0:
+    #         output_pad = nn.Parameter(torch.zeros(self.vocab_size-output_embed.weight.size(0), output_embed.weight.size(1)).to(output_embed.weight.dtype))
+    #         nn.init.kaiming_uniform_(input_pad, a=math.sqrt(5))
+    #         output_embed.weight = nn.Parameter(torch.cat([output_embed.weight, output_pad.to(output_embed.weight.device)]))
+    #         self.set_output_embeddings(output_embed)
 
     def forward(
         self,

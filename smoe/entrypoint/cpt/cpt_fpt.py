@@ -25,9 +25,11 @@ from smoe.callbacks.tensorboard import EnhancedTensorboardCallback
 from smoe.data.collate_fn import fault_tolerance_data_collator
 from smoe.data.dynamic_selection import (
     AVERAGE_SLIMPAJAMA_DATA_PORTION,
+    CODE_DATA_PORTION,
+    CODE_DATA_PORTION_FULL,
+    CODE_DATA_PORTION_ONLY_EVAL,
     LLAMA_DATA_PORTION,
     SHEAREDLLAMA_DATA_PORTION,
-    CODE_DATA_PORTION,
 )
 from smoe.data.streaming import CachedJsonlDataset, SubDirWeightedPackedJsonlDataset
 from smoe.metrics.preprocess import logits_argmax
@@ -108,10 +110,10 @@ def main():
     logger.info(f"Data args: {data_args}")
     logger.info(f"Training args: {training_args.to_json_string()}")
 
-    if training_args.debug_mode:
-        from smoe.utils.debugging import remote_breakpoint
+    # if training_args.debug_mode:
+    #     from smoe.utils.debugging import remote_breakpoint
 
-        remote_breakpoint()
+    #     remote_breakpoint()
 
     # Detecting last checkpoint.
     last_checkpoint = None
@@ -235,6 +237,12 @@ def main():
         prob_map = SHEAREDLLAMA_DATA_PORTION
     elif data_args.prob_map == "code_llama":
         prob_map = CODE_DATA_PORTION
+    elif data_args.prob_map == "code_llama_only_eval":
+        prob_map = CODE_DATA_PORTION_ONLY_EVAL
+    elif data_args.prob_map == "code_llama_full":
+        prob_map = CODE_DATA_PORTION_FULL
+    else:
+        raise NotImplementedError
 
     with training_args.main_process_first(desc="dataset map tokenization and grouping"):
         lm_datasets = SubDirWeightedPackedJsonlDataset(
@@ -346,10 +354,21 @@ def main():
     #     # model.set_moe_calculator_score_scale_factor(1.0)
     #     model.update_config()
 
+    ## DEBUG CODE
+    if training_args.debug_mode:
+        from smoe.utils.debugging import remote_breakpoint
+
+        remote_breakpoint()
+    ## END DEBUG CODE
+
     model_vocab_size = model.get_output_embeddings().weight.size(0)
     if model_vocab_size != len(tokenizer):
         model.resize_token_embeddings(len(tokenizer))
-        raise ValueError(
+        # raise ValueError(
+        #     f"The model's vocab size ({model_vocab_size}) does not match with the"
+        #     f" tokenizer ({len(tokenizer)})"
+        # )
+        logger.info(
             f"The model's vocab size ({model_vocab_size}) does not match with the"
             f" tokenizer ({len(tokenizer)})"
         )
@@ -374,7 +393,7 @@ def main():
     )
     trainer.add_callback(EnhancedTensorboardCallback)
     trainer.add_callback(SchedulerStateCallback)
-    # Training
+
     if training_args.do_train:
         checkpoint = None
         if training_args.resume_from_checkpoint is not None:

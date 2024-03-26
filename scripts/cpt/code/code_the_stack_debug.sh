@@ -1,6 +1,6 @@
 #!/usr/bin/bash
 
-#SBATCH --job-name=MoE
+#SBATCH --job-name=moe_full
 #SBATCH --output=/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2/%x-%j.log
 #SBATCH --error=/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2/%x-%j.log
 
@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=0
 
-#SBATCH --nodes=2
+#SBATCH --nodes=4
 #SBATCH --gres=gpu:8
 #SBATCH --quotatype=auto
 
@@ -18,7 +18,7 @@
 source ~/anaconda3/bin/activate smoe
 
 {
-    num_nodes=2        # should match with --nodes
+    num_nodes=4        # should match with --nodes
     num_gpu_per_node=8 # should match with --gres
 
     # #cpu/#num_gpu_per_node
@@ -26,11 +26,19 @@ source ~/anaconda3/bin/activate smoe
     export LOGLEVEL=INFO
 
     model_type="llama_moe"
-    comment="llama 2 7B, random 2/8, mlp gate, code llama data portion"
+    comment="llama 2 7B, random 2/8, mlp gate, code llama data portion FULL LANGS"
     pretrained_model=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
-    tokenizer_path=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
-    dataset_dir='/mnt/hwfile/share_data/zhutong/slimpajama_fluency_llama'
-    validation_dir='/mnt/hwfile/share_data/zhutong/data/llama1_7B_val_set_tokenized'
+    # tokenizer_path=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
+    tokenizer_path=/mnt/petrelfs/songmingyang/songmingyang/model/others/code_llama_7b
+
+    # dataset_dir='/mnt/petrelfs/songmingyang/songmingyang/data/pretrain/eval_language_split'
+    dataset_dir=/mnt/petrelfs/songmingyang/songmingyang/data/pretrain/full_language_split
+
+    validation_dir='/mnt/petrelfs/songmingyang/songmingyang/data/pretrain/val_the_stack'
+    # dataset_dir='/mnt/hwfile/share_data/zhutong/slimpajama_fluency_llama'
+    # validation_dir='/mnt/hwfile/share_data/zhutong/data/llama1_7B_val_set_tokenized'
+    prob_map=code_llama_full
+
 
     lr=2e-4
     final_lr_portion=0.1
@@ -61,13 +69,13 @@ source ~/anaconda3/bin/activate smoe
     # warmup_steps=$(echo "$warmup_tokens / ($tokens_per_batch)" | bc)
     warmup_steps=100
     echo "warmup tokens: $warmup_tokens, warmup steps: $warmup_steps"
-    # eval_steps=$(echo "$eval_tokens / ($tokens_per_batch)" | bc)
-    eval_steps=340
+    eval_steps=$(echo "$eval_tokens / ($tokens_per_batch)" | bc)
+    # eval_steps=340
     echo "eval interval (tokens): $eval_tokens, steps: $eval_steps"
 
     data_cache=resources/cache
     base_dir="/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2"
-    output_dir=/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2/outputs/MoE-3287121
+    output_dir=$base_dir/outputs/$SLURM_JOB_NAME-$SLURM_JOB_ID
     mkdir -p $output_dir
     echo "output_dir: $output_dir"
     scontrol write batch_script $SLURM_JOBID $output_dir/sbatch.sh
@@ -97,13 +105,13 @@ source ~/anaconda3/bin/activate smoe
     --rdzv_backend c10d \
     --rdzv_endpoint $head_node:29518 \
     smoe/entrypoint/cpt/cpt_fpt.py \
-        --prob_map "code_llama" \
+        --prob_map ${prob_map} \
         --num_selects ${num_selects} \
         --moe_calculator_score_scale_factor ${scale_factor} \
         --deepspeed ${deepspeed_config_file} \
-        --model_name_or_path ${pretrained_model} \
+        --model_name ${pretrained_model} \
         --model_type ${model_type} \
-        --tokenizer_name_or_path ${tokenizer_path} \
+        --tokenizer_name ${tokenizer_path} \
         --dataset_dir ${dataset_dir} \
         --data_cache_dir ${data_cache} \
         --validation_dir ${validation_dir} \
@@ -145,6 +153,8 @@ source ~/anaconda3/bin/activate smoe
         --log_on_each_node False \
         --report_to none \
         --gate_type "TopKBalancedNoisyGate" \
-        --calculator_type "UniversalCalculator"
-        # --overwrite_output_dir \
+        --calculator_type "UniversalCalculator" \
+        --overwrite_output_dir \
+        --resume_from_checkpoint /mnt/petrelfs/songmingyang/songmingyang/runs/llama2_random_split_64gpus_8_2/outputs/moe_full-3450394/checkpoint-1500
+        # --debug_mode
 }

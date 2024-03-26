@@ -4,6 +4,7 @@ import multiprocessing as mp
 from pathlib import Path
 
 import numpy as np
+import pandas as pd
 from datasets import Dataset
 from tqdm import tqdm
 from transformers import AutoTokenizer
@@ -35,7 +36,7 @@ def get_parser():
     parser.add_argument(
         "-f",
         "--format",
-        choices=["jsonl", "txt"],
+        choices=["jsonl", "txt", "parquet"],
         required=True,
         help="input file formats: jsonl or txt",
     )
@@ -66,6 +67,17 @@ def load_txt(filepath, content_column: str = "content"):
     with open(filepath, "r", encoding="utf8") as fin:
         for line in tqdm(fin, desc="Loading"):
             data.append({content_column: line.strip()})
+    return data
+
+
+def load_parquet(filepath, content_column: str = "content"):
+    data = []
+    with open(filepath, "r", encoding="utf8") as fin:
+        df = pd.read_parquet(filepath)
+        progress_bar = tqdm(range(len(df)), desc="loading")
+        for index, row in df.iterrows():
+            data.append(row[content_column])
+            progress_bar.update(1)
     return data
 
 
@@ -123,6 +135,8 @@ def tokenize_jsonl():
             data = load_jsonlines(input_filepath, content_column=args.content_column)
         elif args.format == "txt":
             data = load_txt(input_filepath, content_column=args.content_column)
+        elif args.format == "parquet":
+            data = load_parquet(input_filepath, content_column=args.content_column)
         else:
             raise ValueError(f"{args.format} format not supported")
 

@@ -1,3 +1,5 @@
+import json
+
 import numpy as np
 import torch
 
@@ -23,13 +25,42 @@ SHEAREDLLAMA_DATA_PORTION = {
 
 CODE_DATA_PORTION = {
     "en_cc": 0.07,
-    "en_c4": 0,
-    "github": 0.85,
-    "en_wikipedia": 0,
-    "en_book": 0,
-    "en_arxiv": 0,
+    "the_stack": 0.85,
     "en_stack": 0.08,
 }
+
+CODE_DATA_PORTION_ONLY_EVAL = {
+    "shell": 0.005778694348161168,
+    "cpp": 0.08471646234734545,
+    "c-sharp": 0.05679103733642001,
+    "d": 4.4668326078897255e-06,
+    "go": 0.04699860994091657,
+    "java": 0.11918069344999194,
+    "javascript": 0.24993826230612898,
+    "julia": 0.0028270617590372446,
+    "lua": 0.006004539875253492,
+    "perl": 0.004935537989317665,
+    "php": 0.09690155857042208,
+    "r": 0.0006702627312029321,
+    "racket": 6.376433661955171e-05,
+    "ruby": 0.010352621260245713,
+    "rust": 0.013886281444740753,
+    "scala": 0.006728020314970834,
+    "swift": 0.007745542071831382,
+    "typescript": 0.04191739187878124,
+    "python": 0.09455919120600505,
+    "en_cc": 0.07,
+    "en_stack": 0.08,
+}
+
+# CODE_DATA_PORTION_FULL=None
+
+with open(
+    "/mnt/petrelfs/songmingyang/code/llama-moe/smoe/data/data_portion/full_language_portion.json",
+    "r",
+) as f:
+    # 加载 JSON 数据
+    CODE_DATA_PORTION_FULL = json.load(f)
 
 AVERAGE_SLIMPAJAMA_DATA_PORTION = {
     "en_cc": 1 / 7,

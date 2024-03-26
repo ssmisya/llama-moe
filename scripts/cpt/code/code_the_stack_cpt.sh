@@ -9,7 +9,7 @@
 #SBATCH --cpus-per-task=64
 #SBATCH --mem=0
 
-#SBATCH --nodes=2
+#SBATCH --nodes=4
 #SBATCH --gres=gpu:8
 #SBATCH --quotatype=auto
 
@@ -18,7 +18,7 @@
 source ~/anaconda3/bin/activate smoe
 
 {
-    num_nodes=2        # should match with --nodes
+    num_nodes=4        # should match with --nodes
     num_gpu_per_node=8 # should match with --gres
 
     # #cpu/#num_gpu_per_node
@@ -29,13 +29,16 @@ source ~/anaconda3/bin/activate smoe
     comment="llama 2 7B, random 2/8, mlp gate, code llama data portion"
     pretrained_model=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
     tokenizer_path=/mnt/petrelfs/share_data/songmingyang/model/llama-moe/LLaMA-MoE-v1-3_5B-2_8
-    dataset_dir='/mnt/hwfile/share_data/zhutong/slimpajama_fluency_llama'
-    validation_dir='/mnt/hwfile/share_data/zhutong/data/llama1_7B_val_set_tokenized'
+    dataset_dir='/mnt/petrelfs/songmingyang/songmingyang/data/pretrain/train_llama_moe_code'
+    validation_dir='/mnt/petrelfs/songmingyang/songmingyang/data/pretrain/val_the_stack'
+    # dataset_dir='/mnt/hwfile/share_data/zhutong/slimpajama_fluency_llama'
+    # validation_dir='/mnt/hwfile/share_data/zhutong/data/llama1_7B_val_set_tokenized'
+
 
     lr=2e-4
     final_lr_portion=0.1
-    per_device_train_batch_size=8
-    per_device_eval_batch_size=8
+    per_device_train_batch_size=4
+    per_device_eval_batch_size=4
     gradient_accumulation_steps=4
     block_size=4096
     # batch_size = 4096*8*4*8= 2^22 = 1048576 tokens
@@ -67,7 +70,7 @@ source ~/anaconda3/bin/activate smoe
 
     data_cache=resources/cache
     base_dir="/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2"
-    output_dir=/mnt/petrelfs/share_data/songmingyang/runs/llama2_random_split_64gpus_8_2/outputs/MoE-3287121
+    output_dir=$base_dir/outputs/$SLURM_JOB_NAME-$SLURM_JOB_ID
     mkdir -p $output_dir
     echo "output_dir: $output_dir"
     scontrol write batch_script $SLURM_JOBID $output_dir/sbatch.sh
@@ -145,6 +148,6 @@ source ~/anaconda3/bin/activate smoe
         --log_on_each_node False \
         --report_to none \
         --gate_type "TopKBalancedNoisyGate" \
-        --calculator_type "UniversalCalculator"
-        # --overwrite_output_dir \
+        --calculator_type "UniversalCalculator" \
+        --overwrite_output_dir
 }
